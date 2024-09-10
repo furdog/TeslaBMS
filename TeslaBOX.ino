@@ -13,7 +13,7 @@
  *as the examples and demos are now part of the main LVGL library. */
 
 //#include <examples/lv_examples.h>
-#include <demos/lv_demos.h>
+//#include <demos/lv_demos.h>
 
 lv_display_t * disp;
 
@@ -74,6 +74,7 @@ void my_touchpad_read( lv_indev_t * indev, lv_indev_data_t * data )
 }
 
 #include "custom.h"
+#include "tesla_bms_driver.h"
 
 void setup()
 {
@@ -134,11 +135,17 @@ void setup()
     lv_label_set_text( label, "Hello Arduino, I'm LVGL!" );
     lv_obj_align( label, LV_ALIGN_CENTER, 0, 0 ); */
 
+	tesla_bms_driver_init();
+
     Serial.println( "Setup done" );
 }
 
 void loop()
 {
     lv_task_handler(); /* let the GUI do its work */
-    delay(5); /* let this time pass */
+    //delay(5); /* let this time pass */
+    
+    tesla_bms_driver_update();
+
+    temp_set(tbms_get_module_temp1(&tb, 0));
 }

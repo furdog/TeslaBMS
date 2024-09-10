@@ -14,6 +14,7 @@ fi
 
 # Function to compile and upload
 compile() {
+	cp -u libraries/TeslaBMS-main/tesla_bms.h ./
 	while ! arduino-cli compile -b ${BOARD} --warnings "all" -e --libraries "libraries/"; do
 		read -p "Press any key to continue "
 		exit

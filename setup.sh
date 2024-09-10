@@ -19,8 +19,12 @@ curl -L https://github.com/Bodmer/TFT_eSPI/archive/refs/tags/V2.5.43.zip > TFT_e
 unzip TFT_eSPI.zip
 rm TFT_eSPI.zip
 
-curl -L  https://github.com/lvgl/lvgl/archive/refs/tags/v9.1.0.zip > lvgl.zip
+curl -L https://github.com/lvgl/lvgl/archive/refs/tags/v9.1.0.zip > lvgl.zip
 unzip lvgl.zip
 rm lvgl.zip
+
+curl -L https://github.com/ElektroBOXua/TeslaBMS/archive/refs/heads/main.zip > tbms.zip
+unzip tbms.zip
+rm tbms.zip
 
 cd ..
