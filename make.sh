@@ -1,3 +1,5 @@
+echo "TeslaBOX make..."
+
 BOARD=esp32:esp32:nodemcu-32s
 #BOARD=esp8266:esp8266:nodemcu
 

@@ -147,5 +147,5 @@ void loop()
     
     tesla_bms_driver_update();
 
-    temp_set(tbms_get_module_temp1(&tb, 0));
+    //temp_set(tbms_get_module_temp1(&tb, 0));
 }
