@@ -147,5 +147,24 @@ void loop()
     
     tesla_bms_driver_update();
 
-    //temp_set(tbms_get_module_temp1(&tb, 0));
+    tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
+    tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
+
+    float minv = 999;
+    float maxv = 0;
+
+    for (int i = 0; i < 6; i++) {
+	float v = tbms_get_module_cell_voltage(&tb, 0, i);
+	tbms_ui_set_cell(i, v);
+    
+	if (v < minv)
+		minv = v;
+	
+	if (v > maxv)
+		maxv = v;
+    }
+    
+    tbms_ui_set_min_cell_voltage(minv);
+    tbms_ui_set_max_cell_voltage(maxv);
+    tbms_ui_set_dif_cell_voltage(maxv - minv);
 }
