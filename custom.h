@@ -144,7 +144,7 @@ static void tbms_ui_set_min_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "min %2.1fV", voltage);
+	snprintf(buf, 16, "min %1.2fV", voltage);
 	lv_label_set_text(minvolt_label, buf);
 }
 
@@ -154,7 +154,7 @@ static void tbms_ui_set_max_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "max %2.1fV", voltage);
+	snprintf(buf, 16, "max %1.2fV", voltage);
 	lv_label_set_text(maxvolt_label, buf);
 }
 
@@ -164,26 +164,26 @@ static void tbms_ui_set_dif_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "dif %2.1fV", voltage);
+	snprintf(buf, 16, "dif %1.2fV", voltage);
 	lv_label_set_text(difvolt_label, buf);
 }
 
 static void tbms_ui_set_default()
 {
-	tbms_ui_set_timeleft(1, 5);
+	//tbms_ui_set_timeleft(1, 5);
 
-	tbms_ui_set_voltage(50);
-	tbms_ui_set_current(100);
-	tbms_ui_set_power(5000);
-	tbms_ui_set_temp(21);
+	//tbms_ui_set_voltage(50);
+	//tbms_ui_set_current(100);
+	//tbms_ui_set_power(5000);
+	//tbms_ui_set_temp(21);
 	
-	tbms_ui_set_capacity_ah(66.666, 76.844);
-	tbms_ui_set_cycles(150);
+	//tbms_ui_set_capacity_ah(66.666, 76.844);
+	//tbms_ui_set_cycles(150);
 
-	for (int i = 0; i < 6; i++)
-		tbms_ui_set_cell(i, 3.7);
+	//for (int i = 0; i < 6; i++)
+	//	tbms_ui_set_cell(i, 3.7);
 
-	tbms_ui_set_soc(88);
+	//tbms_ui_set_soc(88);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -344,9 +344,10 @@ lv_obj_t *label_create(lv_obj_t *parent, const char *text)
 }
 
 //percentage bar
-static void labeled_bar_set_after(lv_timer_t * timer)
+//static void labeled_bar_set_after(lv_timer_t * timer)
+static void labeled_bar_set_after(lv_obj_t *obj)
 {
-	lv_obj_t *obj   = (lv_obj_t *)lv_timer_get_user_data(timer);
+	//lv_obj_t *obj   = (lv_obj_t *)lv_timer_get_user_data(timer);
 	lv_obj_t *label = (lv_obj_t *)lv_obj_get_child(obj, 0);
 
 	bool vertical = lv_obj_get_height(obj) > lv_obj_get_width(obj) ? true : false;
@@ -372,7 +373,7 @@ static void labeled_bar_set_after(lv_timer_t * timer)
 		lv_obj_set_style_transform_angle(label, 900*3, LV_PART_MAIN); // 900 = 90 degrees (in tenths of a degree)
 		lv_obj_set_style_text_align(label, LV_ALIGN_BOTTOM_MID, 0);
 		lv_obj_set_style_align(label, LV_ALIGN_BOTTOM_MID, 0);
-		lv_obj_set_pos(label, 1, -lv_area_get_height(&indic_area) + lv_obj_get_width(label) * 2 + 5);
+		lv_obj_set_pos(label, 5, -lv_area_get_height(&indic_area) + lv_obj_get_width(label) * 2 + 5);
 	} else {
 		int label_offset = indic_actual_width - 5;
 		
@@ -390,12 +391,13 @@ static void labeled_bar_set(void * obj, float v, const char *units)
 	lv_bar_set_value((lv_obj_t *)obj, v * 1000, LV_ANIM_OFF);
 	
 	char buf[16];
-	snprintf(buf, sizeof(buf), "%3.1f%s", v, units);
+	snprintf(buf, sizeof(buf), "%3.2f%s", v, units);
 	lv_obj_t * label = lv_obj_get_child((lv_obj_t *)obj, 0);
 	lv_label_set_text(label, buf);
 
-	lv_timer_t * timer = lv_timer_create(labeled_bar_set_after, 100, obj);
-	lv_timer_set_repeat_count(timer, 2);
+	labeled_bar_set_after((lv_obj_t *)obj);
+	//lv_timer_t * timer = lv_timer_create(labeled_bar_set_after, 100, obj);
+	//lv_timer_set_repeat_count(timer, 2);
 }
 
 lv_obj_t *labeled_bar_create(lv_obj_t *parent, float min, float max)
@@ -559,10 +561,10 @@ void build_general_stats(lv_obj_t *parent)
 	lv_obj_t *lcont_UIPT1 = layout_create_inv_table(lcont);
 	lv_obj_set_style_text_color(lcont_UIPT1, lv_color_hex(0xFFFFFF), 0);
 	
-	voltage_label = label_create_simple(lcont_UIPT1, "28.6");
-	current_label = label_create_simple(lcont_UIPT1, "25.3");
-	power_label   = label_create_simple(lcont_UIPT1, "1.56");
-	temp_label    = label_create_simple(lcont_UIPT1, "34");
+	voltage_label = label_create_simple(lcont_UIPT1, "??.?");
+	current_label = label_create_simple(lcont_UIPT1, "??.?");
+	power_label   = label_create_simple(lcont_UIPT1, "??.?");
+	temp_label    = label_create_simple(lcont_UIPT1, "??");
 
 	lv_obj_t *lcont_UIPT2 = layout_create_inv_table(lcont);
 	lv_obj_set_style_text_color(lcont_UIPT2, lv_color_hex(0xFFFF77), 0);
@@ -591,8 +593,8 @@ void build_general_stats(lv_obj_t *parent)
 	
 	lv_obj_t *rcont_CC1 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC1, lv_color_hex(0xFFFF77), 0);
-	capacity_label = label_create_simple(rcont_CC1, "6666");
-	cycles_label  = label_create_simple(rcont_CC1, "8194");
+	capacity_label = label_create_simple(rcont_CC1, "????");
+	cycles_label  = label_create_simple(rcont_CC1, "????");
 	
 	lv_obj_t *rcont_CC2 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC2, lv_color_hex(0xFF7777), 0);
@@ -601,7 +603,7 @@ void build_general_stats(lv_obj_t *parent)
 
 	lv_obj_t *rcont_CC3 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC3, lv_color_hex(0xFFFF77), 0);
-	capacity_max_label = label_create_simple(rcont_CC3, "76844");
+	capacity_max_label = label_create_simple(rcont_CC3, "????");
 	label_create_simple(rcont_CC3, "??");
 	
 	//RIGHT CONTENT LAYOUT LOWER STATUS PART
@@ -609,7 +611,7 @@ void build_general_stats(lv_obj_t *parent)
 	lv_obj_set_style_pad_all(rcont_down, 0, 0);
 	lv_obj_set_flex_grow(rcont_down, 1);
 	lv_obj_set_style_bg_grad_color(rcont_down, lv_color_hex(0xAA4444), 0);
-	label_create_simple(rcont_down, "STATUS OK");
+	label_create_simple(rcont_down, "STATUS ??");
 }
 
 void build_cell(lv_obj_t *parent, int cell_num)
@@ -626,7 +628,7 @@ void build_cell(lv_obj_t *parent, int cell_num)
 	lv_obj_t *volume = volume_create(layout, 15, LV_PCT(95));
 	cell_bar[cell_num] = labeled_bar_create(volume, 2.7, 4.2);
 	lv_obj_set_width(cell_bar[cell_num], 10);
-	labeled_bar_set(cell_bar[cell_num], 3.7, "");
+	labeled_bar_set(cell_bar[cell_num], 0, "");
 }
 
 void build_cells(lv_obj_t *parent, int cell_num)
@@ -641,9 +643,9 @@ void build_cells(lv_obj_t *parent, int cell_num)
 	lv_obj_set_flex_grow(cell_stats, 1);
 	lv_obj_set_flex_flow(cell_stats, LV_FLEX_FLOW_ROW);
 
-	minvolt_label = label_create_simple(cell_stats, "min 30.7V");
-	maxvolt_label = label_create_simple(cell_stats, "max 6.77V");
-	difvolt_label = label_create_simple(cell_stats, "dif 4.47V");
+	minvolt_label = label_create_simple(cell_stats, "min ?.??V");
+	maxvolt_label = label_create_simple(cell_stats, "max ?.??V");
+	difvolt_label = label_create_simple(cell_stats, "dif ?.??V");
 
 	lv_obj_t *cell_voltages = layout_create_inv(layout, LV_PCT(100), 0);
 	lv_obj_set_style_pad_all(cell_voltages, 0, 0);
@@ -672,7 +674,7 @@ void build_extra_interface(lv_obj_t *parent)
 	//SOC BAR
 	lv_obj_t *volume = volume_create(layout, LV_PCT(100), LV_PCT(100));
 	soc_bar = labeled_bar_create(volume, 0, 100);
-	labeled_bar_set(soc_bar, 87, "%");
+	labeled_bar_set(soc_bar, 0, "%");
 
 	tbms_ui_set_default();
 }
@@ -697,11 +699,11 @@ lv_obj_t *create_screen_click_notifier(lv_obj_t *parent)
 
 void build_user_interface(void);
 
-static void screen_click_delayed_create(lv_timer_t * timer)
+/*static void screen_click_delayed_create(lv_timer_t * timer)
 {
 	lv_obj_t *cont = (lv_obj_t *)lv_timer_get_user_data(timer);
 	create_screen_click_notifier(cont);
-}
+}*/
 
 static void screen_click_event_cb(lv_event_t * e)
 {
@@ -734,6 +736,7 @@ void build_user_interface(void)
 	else
 		build_extra_interface(cont);
 	
-	lv_timer_t * timer = lv_timer_create(screen_click_delayed_create, 1000, cont);
-	lv_timer_set_repeat_count(timer, 1);
+	create_screen_click_notifier(cont);
+	//lv_timer_t * timer = lv_timer_create(screen_click_delayed_create, 1000, cont);
+	//lv_timer_set_repeat_count(timer, 1);
 }

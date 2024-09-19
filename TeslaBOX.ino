@@ -135,7 +135,8 @@ void setup()
     lv_label_set_text( label, "Hello Arduino, I'm LVGL!" );
     lv_obj_align( label, LV_ALIGN_CENTER, 0, 0 ); */
 
-	tesla_bms_driver_init();
+    delay(5000);
+    tesla_bms_driver_init();
 
     Serial.println( "Setup done" );
 }
