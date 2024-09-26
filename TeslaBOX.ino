@@ -155,7 +155,7 @@ void setup()
 	lv_label_set_text( label, "Hello Arduino, I'm LVGL!" );
 	lv_obj_align( label, LV_ALIGN_CENTER, 0, 0 ); */
 
-	delay(1000);
+	//delay(2000);
 	tesla_bms_driver_init();
 	
 	//CONTACTOR
@@ -197,9 +197,12 @@ void loop()
 	tbms_ui_set_dif_cell_voltage(maxv - minv);
 	
 	//CONTACTOR MANAGMENT:
+	//TODO method instead of !tb.modules[0].exist;
+	bool has_faults = !tbms_is_ready(&tb) || !tb.modules[0].exist;
+
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
 	tbox_contactor_ack_current(&contactor, 0); //TODO
-	tbox_contactor_ack_faults(&contactor, false); //TODO
+	tbox_contactor_ack_faults(&contactor, has_faults);
 	
 	//TODO more temps
 	tbox_contactor_ack_temp(&contactor, tbms_get_module_temp1(&tb, 0));
