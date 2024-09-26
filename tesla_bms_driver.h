@@ -1,17 +1,3 @@
-static clock_t timestamp_prev = 0;
-static clock_t timestamp      = 0;
-
-clock_t get_delta_time_ms()
-{
-	clock_t delta;
-	
-	timestamp = millis();
-	delta = timestamp - timestamp_prev;
-	timestamp_prev = timestamp;
-	
-	return delta;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -80,16 +66,16 @@ void print_stats(clock_t delta)
 	static async state;
 	static clock_t timer = 0;
 	
-	async_dispatch(state);
+	ASYNC_DISPATCH(state);
 	
 	printf("PACK VOLTAGE %f\n", tbms_get_module_voltage(&tb, 0));
 	printf("PACK TEMP    %f\n", tbms_get_module_temp1(&tb, 0));
 	
-	async_await((timer += delta) >= 1000, return);
+	ASYNC_AWAIT((timer += delta) >= 1000, return);
 	
 	timer = 0;
 	
-	async_reset(return);
+	ASYNC_RESET(return);
 }
 
 void tesla_bms_driver_init()
@@ -100,10 +86,8 @@ void tesla_bms_driver_init()
 	tbms_init(&tb);
 }
 
-void tesla_bms_driver_update()
-{
-	clock_t delta = get_delta_time_ms();
-	
+void tesla_bms_driver_update(clock_t delta)
+{	
 	if (tbms_tx_available(&tb)) {
 		esp_idf_uart_write(tbms_get_tx_buf(&tb), tbms_get_tx_len(&tb));
 		
