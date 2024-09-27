@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #define TBOX_DEBUG
-#include "counters.h"
+#include "contactor.h"
 
 struct tbox_contactor contactor;
 int main()

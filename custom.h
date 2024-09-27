@@ -480,7 +480,7 @@ void current_bar_create(lv_obj_t *parent)
 {
 	lv_obj_t *layout = layout_create(parent, 60, LV_PCT(95));
 
-	label_create_simple(layout, "Power");
+	label_create_simple(layout, "Current");
 
 	//BAR
 	lv_obj_t *volume = volume_create(layout, 30, LV_PCT(80));

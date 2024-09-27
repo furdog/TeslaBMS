@@ -87,9 +87,10 @@ clock_t get_delta_time_ms()
 	
 	return delta;
 }
-
+#define TBMS_DEBUG
+#define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
-#include "counters.h"
+#include "contactor.h"
 
 #include "custom.h"
 #include "tesla_bms_driver.h"
@@ -162,24 +163,22 @@ void setup()
 	tbox_contactor_init(&contactor);
 	pinMode(TBOX_CONTACTOR_PIN, OUTPUT);
 	digitalWrite(TBOX_CONTACTOR_PIN, LOW);
+	//CURRENT
+	pinMode(TBOX_CURRENT_METER_PIN, INPUT);
 
 	Serial.println( "Setup done" );
 }
 
 void loop()
-{
+{		
 	clock_t delta = get_delta_time_ms();
-	
-	lv_task_handler(); /* let the GUI do its work */
-	//delay(5); /* let this time pass */
-	
-	tesla_bms_driver_update(delta);
 
-	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
-	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
+	tesla_bms_driver_update(delta);
 
 	float minv = 999;
 	float maxv = 0;
+	//float curr = analogRead(TBOX_CURRENT_METER_PIN);
+	float curr = 0;
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -192,16 +191,12 @@ void loop()
 			maxv = v;
 	}
 	
-	tbms_ui_set_min_cell_voltage(minv);
-	tbms_ui_set_max_cell_voltage(maxv);
-	tbms_ui_set_dif_cell_voltage(maxv - minv);
-	
 	//CONTACTOR MANAGMENT:
 	//TODO method instead of !tb.modules[0].exist;
-	bool has_faults = !tbms_is_ready(&tb) || !tb.modules[0].exist;
+	bool has_faults = !tbms_is_ready(&tb);
 
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
-	tbox_contactor_ack_current(&contactor, 0); //TODO
+	tbox_contactor_ack_current(&contactor, curr);
 	tbox_contactor_ack_faults(&contactor, has_faults);
 	
 	//TODO more temps
@@ -217,4 +212,24 @@ void loop()
 		printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
 	}
+
+	//UI (update less time to let other tasks run smoothly)
+	static clock_t ui_update_timer = 0;
+	ui_update_timer += delta;
+
+	if (ui_update_timer < 100)
+		return;
+	
+	ui_update_timer = 0;
+
+	lv_task_handler(); /* let the GUI do its work */
+	//delay(5); /* let this time pass */
+	
+	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
+	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
+	tbms_ui_set_current(curr);
+	
+	tbms_ui_set_min_cell_voltage(minv);
+	tbms_ui_set_max_cell_voltage(maxv);
+	tbms_ui_set_dif_cell_voltage(maxv - minv);
 }
