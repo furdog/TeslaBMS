@@ -4,6 +4,7 @@
 #include <time.h>
 #include "async.h"
 
+#define TBOX_CONTACTOR_INIT_TIME           10000
 #define TBOX_CONTACTOR_MAX_VOLTAGE_DEFAULT 4.25
 #define TBOX_CONTACTOR_MIN_VOLTAGE_DEFAULT 2.5
 #define TBOX_CONTACTOR_MAX_CURRENT_DEFAULT 200
@@ -126,9 +127,10 @@ enum tbox_contactor_event tbox_contactor_update(struct tbox_contactor *self,
 	
 	ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_OPEN);
 
-	//Wait 5 sec for startup
+	//Wait for startup
 	self->timer = 0;
-	ASYNC_AWAIT(self->timer >= 5000, return TBOX_CONTACTOR_EVENT_NONE);
+	ASYNC_AWAIT(self->timer >= TBOX_CONTACTOR_INIT_TIME,
+		    return TBOX_CONTACTOR_EVENT_NONE);
 
 	while (true)
 		ASYNC_YIELD(return tbox_contactor_update_sub(self));

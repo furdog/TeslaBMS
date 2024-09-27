@@ -87,7 +87,7 @@ clock_t get_delta_time_ms()
 	
 	return delta;
 }
-#define TBMS_DEBUG
+//#define TBMS_DEBUG
 #define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
 #include "contactor.h"
@@ -170,15 +170,16 @@ void setup()
 }
 
 void loop()
-{		
+{	
 	clock_t delta = get_delta_time_ms();
 
 	tesla_bms_driver_update(delta);
 
 	float minv = 999;
 	float maxv = 0;
-	//float curr = analogRead(TBOX_CURRENT_METER_PIN);
-	float curr = 0;
+	static float curr = 0;
+	static float current_offset = 0;
+	float calibrated_current = curr - current_offset;
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -193,11 +194,15 @@ void loop()
 	
 	//CONTACTOR MANAGMENT:
 	//TODO method instead of !tb.modules[0].exist;
-	bool has_faults = !tbms_is_ready(&tb);
+	bool has_faults = !tbms_is_ready(&tb) || abs(current_offset) > 10;
 
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
-	tbox_contactor_ack_current(&contactor, curr);
+	tbox_contactor_ack_current(&contactor, calibrated_current);
 	tbox_contactor_ack_faults(&contactor, has_faults);
+
+	static bool contactor_closed = false;
+	static clock_t auto_calibration_delay = 0;
+	auto_calibration_delay += delta;
 	
 	//TODO more temps
 	tbox_contactor_ack_temp(&contactor, tbms_get_module_temp1(&tb, 0));
@@ -208,9 +213,12 @@ void loop()
 	if (cont_ev == TBOX_CONTACTOR_EVENT_OPEN) {
 		printf("CONTACTOR OPEN EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, LOW);
+		contactor_closed = false;
+		auto_calibration_delay = 0;
 	} else if (cont_ev == TBOX_CONTACTOR_EVENT_CLOSE) {
 		printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
+		contactor_closed = true;
 	}
 
 	//UI (update less time to let other tasks run smoothly)
@@ -227,9 +235,20 @@ void loop()
 	
 	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
 	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
-	tbms_ui_set_current(curr);
+	tbms_ui_set_current(calibrated_current);
 	
 	tbms_ui_set_min_cell_voltage(minv);
 	tbms_ui_set_max_cell_voltage(maxv);
 	tbms_ui_set_dif_cell_voltage(maxv - minv);
+
+	float alpha = 0.05; // коефіцієнт згладжування, де 0 < alpha <= 1
+	curr = alpha * ((analogRead(TBOX_CURRENT_METER_PIN) - 2048) / 10.0) +
+	       (1 - alpha) * curr;
+	       
+	//PERFORM CURRENT AUTOCALIBRATION
+	if (!contactor_closed)
+	{
+		current_offset = curr;
+		auto_calibration_delay = 0;
+	}
 }
