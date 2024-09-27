@@ -4,7 +4,7 @@
 #include <time.h>
 #include "async.h"
 
-#define TBOX_CONTACTOR_INIT_TIME           10000
+#define TBOX_CONTACTOR_INIT_TIME           15000
 #define TBOX_CONTACTOR_MAX_VOLTAGE_DEFAULT 4.25
 #define TBOX_CONTACTOR_MIN_VOLTAGE_DEFAULT 2.5
 #define TBOX_CONTACTOR_MAX_CURRENT_DEFAULT 200
@@ -17,8 +17,12 @@ enum tbox_contactor_event {
 };
 
 struct tbox_contactor {
-	async state;
-	async substate;
+	struct {
+		async state;
+		async substate;
+	} async;
+	
+	enum tbox_contactor_event last_event;
 	
 	float max_voltage;
 	float min_voltage;
@@ -39,8 +43,10 @@ struct tbox_contactor {
 
 void tbox_contactor_init(struct tbox_contactor *self)
 {
-	self->state = 0;
-	self->substate = 0;
+	self->async.state    = 0;
+	self->async.substate = 0;
+	
+	self->last_event = TBOX_CONTACTOR_EVENT_NONE;
 	
 	self->max_voltage = TBOX_CONTACTOR_MAX_VOLTAGE_DEFAULT;
 	self->min_voltage = TBOX_CONTACTOR_MIN_VOLTAGE_DEFAULT;
@@ -84,20 +90,26 @@ bool tbox_contactor_has_condition_violation(struct tbox_contactor *self)
 		self->temp_violation || self->faults_violation);
 }
 
+enum tbox_contactor_event tbox_contactor_set_event(
+					struct tbox_contactor *self,
+					enum tbox_contactor_event event)
+{
+	if (self->last_event == event)
+		return TBOX_CONTACTOR_EVENT_NONE;
+	
+	self->last_event = event;
+	
+	return event;
+}
+
 enum tbox_contactor_event tbox_contactor_update_sub(
 				struct tbox_contactor *self)
 {
-	ASYNC_DISPATCH(self->substate);
+	ASYNC_DISPATCH(self->async.substate);
 
-	if (!tbox_contactor_has_condition_violation(self)) {		
-		//Looks like everything fine at this point
-		//we can close contactor
-		ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_CLOSE);
-		
-		//Wait until condition violation, forever
-		ASYNC_AWAIT(tbox_contactor_has_condition_violation(self),
-			    return TBOX_CONTACTOR_EVENT_NONE);
-	}
+	//Wait until condition violation, forever
+	ASYNC_AWAIT(tbox_contactor_has_condition_violation(self),
+		    return TBOX_CONTACTOR_EVENT_CLOSE);
 
 	//If condition been violated - open contactor
 	ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_OPEN);
@@ -111,11 +123,11 @@ enum tbox_contactor_event tbox_contactor_update_sub(
 		if (self->timer >= 30000)
 			break;
 
-		ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_NONE);
+		ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_OPEN);
 	}
 	
 	//Reset this routine
-	ASYNC_RESET(return TBOX_CONTACTOR_EVENT_NONE);
+	ASYNC_RESET(return TBOX_CONTACTOR_EVENT_OPEN);
 }
 
 enum tbox_contactor_event tbox_contactor_update(struct tbox_contactor *self,
@@ -123,17 +135,18 @@ enum tbox_contactor_event tbox_contactor_update(struct tbox_contactor *self,
 {
 	self->timer += delta;
 	
-	ASYNC_DISPATCH(self->state);
+	ASYNC_DISPATCH(self->async.state);
 	
 	ASYNC_YIELD(return TBOX_CONTACTOR_EVENT_OPEN);
 
-	//Wait for startup
+	//START TIMER
 	self->timer = 0;
 	ASYNC_AWAIT(self->timer >= TBOX_CONTACTOR_INIT_TIME,
 		    return TBOX_CONTACTOR_EVENT_NONE);
 
 	while (true)
-		ASYNC_YIELD(return tbox_contactor_update_sub(self));
+		ASYNC_YIELD(return tbox_contactor_set_event(self,
+				   tbox_contactor_update_sub(self)));
 }
 
 //////////////////// DEBUG ////////////////////

@@ -173,13 +173,15 @@ void loop()
 {	
 	clock_t delta = get_delta_time_ms();
 
+	tb.io.timeout = 1000; //Set bigger timeout for io
 	tesla_bms_driver_update(delta);
 
 	float minv = 999;
 	float maxv = 0;
 	static float curr = 0;
 	static float current_offset = 0;
-	float calibrated_current = curr - current_offset;
+	static float current_mult   = 1.1194029850746268656716417910448;
+	float calibrated_current = (curr - current_offset) * current_mult;
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -194,7 +196,7 @@ void loop()
 	
 	//CONTACTOR MANAGMENT:
 	//TODO method instead of !tb.modules[0].exist;
-	bool has_faults = !tbms_is_ready(&tb) || abs(current_offset) > 10;
+	bool has_faults = !tbms_is_ready(&tb);// || abs(current_offset) > 10;
 
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
 	tbox_contactor_ack_current(&contactor, calibrated_current);
@@ -236,11 +238,14 @@ void loop()
 	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
 	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
 	tbms_ui_set_current(calibrated_current);
+	tbms_ui_set_power(calibrated_current *
+			  tbms_get_module_voltage(&tb, 0));
 	
 	tbms_ui_set_min_cell_voltage(minv);
 	tbms_ui_set_max_cell_voltage(maxv);
 	tbms_ui_set_dif_cell_voltage(maxv - minv);
 
+	//6.7, 7.5
 	float alpha = 0.05; // коефіцієнт згладжування, де 0 < alpha <= 1
 	curr = alpha * ((analogRead(TBOX_CURRENT_METER_PIN) - 2048) / 10.0) +
 	       (1 - alpha) * curr;
