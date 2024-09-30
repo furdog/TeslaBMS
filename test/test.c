@@ -12,6 +12,7 @@ int main()
 	tbox_contactor_ack_current(&contactor, 0);
 	tbox_contactor_ack_faults(&contactor, false);
 	tbox_contactor_ack_temp(&contactor, 21);
+	tbox_contactor_ack_ready(&contactor, true);
 	
 	enum tbox_contactor_event ev_delta = TBOX_CONTACTOR_EVENT_NONE;
 	

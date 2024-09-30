@@ -203,8 +203,8 @@ void loop()
 	tbox_contactor_ack_faults(&contactor, has_faults);
 
 	static bool contactor_closed = false;
-	static clock_t auto_calibration_delay = 0;
-	auto_calibration_delay += delta;
+	static clock_t auto_calibration_timer = 0;
+	auto_calibration_timer += delta;
 	
 	//TODO more temps
 	tbox_contactor_ack_temp(&contactor, tbms_get_module_temp1(&tb, 0));
@@ -216,7 +216,7 @@ void loop()
 		printf("CONTACTOR OPEN EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, LOW);
 		contactor_closed = false;
-		auto_calibration_delay = 0;
+		auto_calibration_timer = 0;
 	} else if (cont_ev == TBOX_CONTACTOR_EVENT_CLOSE) {
 		printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
@@ -251,9 +251,12 @@ void loop()
 	       (1 - alpha) * curr;
 	       
 	//PERFORM CURRENT AUTOCALIBRATION
-	if (!contactor_closed)
+	if (tbox_contactor_get_event(&contactor) ==
+	    TBOX_CONTACTOR_EVENT_OPEN && !has_faults)
 	{
 		current_offset = curr;
-		auto_calibration_delay = 0;
+		
+		if (auto_calibration_timer >= 25000)
+			tbox_contactor_ack_ready(&contactor, true);
 	}
 }
