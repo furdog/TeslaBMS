@@ -17,6 +17,7 @@ static lv_obj_t *power_label;
 static lv_obj_t *cycles_label;
 static lv_obj_t *temp_bar;
 static lv_obj_t *temp_label;
+static lv_obj_t *fet_label;
 
 static lv_obj_t *minvolt_label;
 static lv_obj_t *maxvolt_label;
@@ -33,13 +34,13 @@ static void tbms_ui_set_timeleft(int hours, int minutes)
 	lv_label_set_text(timeleft_label, buf);
 }
 
-/*static void tbms_ui_set_timeleft_seconds(int seconds)
+static void tbms_ui_set_timeleft_seconds(int seconds)
 {
 	int hours = seconds / 3600;
 	int minutes = (seconds % 3600) / 60;
 
 	tbms_ui_set_timeleft(hours, minutes);
-}*/
+}
 
 static void tbms_ui_set_voltage(float val)
 {
@@ -50,6 +51,14 @@ static void tbms_ui_set_voltage(float val)
 	snprintf(buf, 16, "%2.1f", val);
 	
 	lv_label_set_text(voltage_label, buf);
+}
+
+static void tbms_ui_set_fet_status(bool enabled)
+{
+	if (!detailed_ui)
+		return;
+	
+	lv_label_set_text(fet_label, enabled ? "ON" : "OFF");
 }
 
 static void tbms_ui_set_current(float val)
@@ -106,7 +115,7 @@ static void tbms_ui_set_soc(int value)
 	lv_label_set_text(soc_label, buf);
 }
 
-static void tbms_ui_set_capacity_ah(float current, float max)
+static void tbms_ui_set_capacity_wh(float current, float max)
 {
 	if (!detailed_ui)
 		return;
@@ -115,7 +124,7 @@ static void tbms_ui_set_capacity_ah(float current, float max)
 	snprintf(buf, 16, "%2.1f", current);
 	lv_label_set_text(capacity_label, buf);
 	
-	snprintf(buf, 16, "%2.1faH", max);
+	snprintf(buf, 16, "%2.1fwH", max);
 	lv_label_set_text(capacity_max_label, buf);
 }
 
@@ -604,7 +613,7 @@ void build_general_stats(lv_obj_t *parent)
 	lv_obj_t *rcont_CC3 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC3, lv_color_hex(0xFFFF77), 0);
 	capacity_max_label = label_create_simple(rcont_CC3, "????");
-	label_create_simple(rcont_CC3, "??");
+	fet_label = label_create_simple(rcont_CC3, "??");
 	
 	//RIGHT CONTENT LAYOUT LOWER STATUS PART
 	lv_obj_t *rcont_down = layout_create(rcont, LV_PCT(100), LV_PCT(100));

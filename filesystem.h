@@ -12,19 +12,20 @@ struct tbox_filesystem {
 void tbox_filesystem_init(struct tbox_filesystem *self,
 			  struct tbox_counter *counter)
 {
-#if defined(ESP32)	
-	if (!LittleFS.begin(true)) {
-#else
-	if (!LittleFS.begin()) {
-#endif
-		return;
-	}
-
 	self->commit = false;
 	
 	self->counter = counter;
 
 	self->timer = 0;
+	
+#if defined(ESP32)	
+	if (!LittleFS.begin(true)) {
+#else
+	if (!LittleFS.begin()) {
+#endif
+		Serial.println(F("Failed to init filesystem"));
+		return;
+	}
 }
 
 void tbox_filesystem_save(struct tbox_filesystem *self)
@@ -34,7 +35,7 @@ void tbox_filesystem_save(struct tbox_filesystem *self)
 
 	self->commit = false;
 
-	fs::File file = LittleFS.open("state.bin", "w");
+	fs::File file = LittleFS.open("/state.bin", "w");
 	if (!file) {
 		Serial.println(F("Failed to open file for writing"));
 
@@ -47,7 +48,7 @@ void tbox_filesystem_save(struct tbox_filesystem *self)
 }
 
 void tbox_filesystem_load(struct tbox_filesystem *self) {
-	fs::File file = LittleFS.open("state.bin", "r");
+	fs::File file = LittleFS.open("/state.bin", "r");
 	if (!file) {
 		Serial.println(F("Failed to open file for reading"));
 		
@@ -75,7 +76,7 @@ void tbox_filesystem_update(struct tbox_filesystem *self, clock_t delta)
 {
 	self->timer += delta;
 	
-	if (self->timer >= 5000) {
+	if (self->timer >= 30000) {
 		if (self->commit)
 			tbox_filesystem_save(self);
 

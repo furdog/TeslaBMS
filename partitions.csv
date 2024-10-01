@@ -1,0 +1,10 @@
+# Name,   Type, SubType,  Offset,  Size, Flags
+nvs,      data, nvs,      36K,     20K,
+otadata,  data, ota,      56K,     8K,
+app0,     app,  ota_0,    64K,     1600K,
+app1,     app,  ota_1,    1664K,   1600K,
+spiffs,   data, spiffs,   3264K,   832K,
+
+#Total flash size 4096.
+#NVS and OTA + 64K alignment for app.
+#4032 is left (1600K for ota1, 1600 for ota2, 832K for spiffs)

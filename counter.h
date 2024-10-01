@@ -70,15 +70,14 @@ float tbox_counter_get_total_capacity_wh(struct tbox_counter *self)
 	return self->total_capacity_wh;
 }
 
-//set/get total remaining_capacity
+//set/get remaining_capacity
 void tbox_counter_set_remaining_capacity_wh(struct tbox_counter *self,
 					    float wh)
 {
 	self->remaining_capacity_wh = wh;
 }
 
-float tbox_counter_get_remaining_capacity_wh(struct tbox_counter *self,
-					     float wh)
+float tbox_counter_get_remaining_capacity_wh(struct tbox_counter *self)
 {
 	return self->remaining_capacity_wh;
 }
@@ -86,10 +85,10 @@ float tbox_counter_get_remaining_capacity_wh(struct tbox_counter *self,
 //other getters
 float tbox_counter_get_cycles(struct tbox_counter *self)
 {
-	if (self->total_consumed_wh <= 0.0)
+	if (self->total_capacity_wh <= 0.0)
 		return 0.0;
 		
-	return self->total_capacity_wh / self->total_consumed_wh;
+	return self->total_consumed_wh / self->total_capacity_wh;
 }
 
 float tbox_counter_get_soc_normalized(struct tbox_counter *self)

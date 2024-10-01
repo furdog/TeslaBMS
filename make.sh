@@ -14,10 +14,14 @@ if [[ "$BOARD" == "esp8266:esp8266:nodemcu" ]]; then
 	UPLOADSPEED=
 fi
 
+PROPS='--build-property build.partitions=partitions
+       --build-property upload.maximum_size=1638400'
+echo "PROPS: " ${PROPS}
+
 # Function to compile and upload
 compile() {
 	cp -u libraries/TeslaBMS-main/tesla_bms.h ./
-	while ! arduino-cli compile -b ${BOARD} --warnings "all" -e --libraries "libraries/"; do
+	while ! arduino-cli compile -b ${BOARD} --warnings "all" ${PROPS} -e --libraries "libraries/"; do
 		read -p "Press any key to continue "
 		exit
 	done
@@ -41,9 +45,20 @@ monitor() {
 	fi
 }
 
+erase() {
+	if [ -n "${MONITOR_PORT+x}" ]; then
+		while true; do
+			 arduino-cli upload -b ${BOARD}${UPLOADSPEED} -p ${AUTOFLASH_PORT} --erase;
+			sleep 1
+		done
+	fi
+}
+
 # Check if the argument is "monitor"
 if [ "$1" == "monitor" ]; then
 	monitor
+elif [ "$1" == "erase" ]; then
+	erase
 elif [ "$1" == "upload" ]; then
 	upload
 elif [ "$1" == "setup" ]; then
