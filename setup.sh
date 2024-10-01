@@ -15,6 +15,10 @@ cd ..
 mkdir -p libraries
 cd libraries
 
+#curl -L https://github.com/lorol/LITTLEFS/archive/refs/tags/1.0.6.zip > fs.zip
+#unzip fs.zip
+#rm fs.zip
+
 curl -L https://github.com/Bodmer/TFT_eSPI/archive/refs/tags/V2.5.43.zip > TFT_eSPI.zip
 unzip TFT_eSPI.zip
 rm TFT_eSPI.zip

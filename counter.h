@@ -1,3 +1,6 @@
+#ifndef  TBOX_COUNTER_GUARD
+#define  TBOX_COUNTER_GUARD
+
 #include <time.h>
 #include <stdio.h>
 #include <assert.h>
@@ -44,24 +47,43 @@ float tbox_counter_clampf(float value, float min, float max)
 	return value;
 }
 
+//set/get total consumed_wh
 void tbox_counter_set_total_consumed_wh(struct tbox_counter *self, float wh)
 {
 	self->total_consumed_wh = wh;
 }
 
+float tbox_counter_get_total_consumed_wh(struct tbox_counter *self)
+{
+	return self->total_consumed_wh;
+}
+
+//set/get total capacity
 void tbox_counter_set_total_capacity_wh(struct tbox_counter *self,
 					float wh)
 {
 	self->total_capacity_wh = wh;
 }
 
+float tbox_counter_get_total_capacity_wh(struct tbox_counter *self)
+{
+	return self->total_capacity_wh;
+}
 
+//set/get total remaining_capacity
 void tbox_counter_set_remaining_capacity_wh(struct tbox_counter *self,
 					    float wh)
 {
 	self->remaining_capacity_wh = wh;
 }
 
+float tbox_counter_get_remaining_capacity_wh(struct tbox_counter *self,
+					     float wh)
+{
+	return self->remaining_capacity_wh;
+}
+
+//other getters
 float tbox_counter_get_cycles(struct tbox_counter *self)
 {
 	if (self->total_consumed_wh <= 0.0)
@@ -137,3 +159,5 @@ const char *tbox_counter_get_event_name(enum tbox_counter_event event)
 	return NULL;
 }
 #endif
+
+#endif //TBOX_COUNTER_GUARD
