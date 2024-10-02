@@ -18,20 +18,38 @@ static lv_obj_t *cycles_label;
 static lv_obj_t *temp_bar;
 static lv_obj_t *temp_label;
 static lv_obj_t *fet_label;
+static lv_obj_t *status_label;
 
 static lv_obj_t *minvolt_label;
 static lv_obj_t *maxvolt_label;
 static lv_obj_t *difvolt_label;
 
+static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt)
+{
+	if (!detailed_ui)
+		return;
+
+	static char buf[32];
+
+	snprintf(buf, 32, "STATUS: %s (%02x)",
+		 stat || overvolt || undervolt ? "FAULT" : "OK", stat);
+
+	lv_label_set_text(status_label, buf);
+}
+
 static void tbms_ui_set_timeleft(int hours, int minutes)
 {
 	if (detailed_ui)
 		return;
-	
-	static char buf[16];
-	snprintf(buf, 16, "%02d : %02d", hours, minutes);
 
-	lv_label_set_text(timeleft_label, buf);
+	if (hours < 99) {
+		static char buf[16];
+		snprintf(buf, 16, "%02d : %02d", hours, minutes);
+
+		lv_label_set_text(timeleft_label, buf);
+	} else {
+		lv_label_set_text(timeleft_label, "??:??");
+	}
 }
 
 static void tbms_ui_set_timeleft_seconds(int seconds)
@@ -101,7 +119,7 @@ static void tbms_ui_set_temp(int val)
 }
 
 static void labeled_bar_set(void * obj, float v, const char *units);
-static void tbms_ui_set_soc(int value)
+static void tbms_ui_set_soc(float value)
 {
 	if (detailed_ui) {
 		labeled_bar_set(soc_bar, value, "%");
@@ -111,7 +129,7 @@ static void tbms_ui_set_soc(int value)
 	lv_arc_set_value(soc_arc, value);
 
 	char buf[16];
-	snprintf(buf, 16, "%i%%", value);
+	snprintf(buf, 16, "%2.0f%%", value);
 	lv_label_set_text(soc_label, buf);
 }
 
@@ -124,17 +142,17 @@ static void tbms_ui_set_capacity_wh(float current, float max)
 	snprintf(buf, 16, "%2.1f", current);
 	lv_label_set_text(capacity_label, buf);
 	
-	snprintf(buf, 16, "%2.1fwH", max);
+	snprintf(buf, 16, "%2.0fwH", max);
 	lv_label_set_text(capacity_max_label, buf);
 }
 
-static void tbms_ui_set_cycles(int cycles)
+static void tbms_ui_set_cycles(float cycles)
 {
 	if (!detailed_ui)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "%i", cycles);
+	snprintf(buf, 16, "%2.1f", cycles);
 	lv_label_set_text(cycles_label, buf);
 }
 
@@ -620,7 +638,7 @@ void build_general_stats(lv_obj_t *parent)
 	lv_obj_set_style_pad_all(rcont_down, 0, 0);
 	lv_obj_set_flex_grow(rcont_down, 1);
 	lv_obj_set_style_bg_grad_color(rcont_down, lv_color_hex(0xAA4444), 0);
-	label_create_simple(rcont_down, "STATUS ??");
+	status_label = label_create_simple(rcont_down, "STATUS ??");
 }
 
 void build_cell(lv_obj_t *parent, int cell_num)

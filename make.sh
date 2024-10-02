@@ -20,6 +20,22 @@ echo "PROPS: " ${PROPS}
 
 # Function to compile and upload
 compile() {
+	#Побудувати веб інтерфейс
+	#echo "Building web..."
+	#cd libraries/lwDASH-main
+	#export GIT_WEB_VERSION=$(git describe --tags)
+	#bash make.sh ../../web_interface.js
+
+	#cd ../../
+	#input_file="libraries/lwDASH-main/build/index.h"
+	#output_file="web_interface.h"
+
+	#Копіюємо згенерований gz массив
+	#cp -u "$input_file" "$output_file"
+	#sed -i 's/unsigned char/const PROGMEM char/g' "$output_file"
+
+	#echo "HTML content has been written to $output_file"
+	
 	cp -u libraries/TeslaBMS-main/tesla_bms.h ./
 	while ! arduino-cli compile -b ${BOARD} --warnings "all" ${PROPS} -e --libraries "libraries/"; do
 		read -p "Press any key to continue "

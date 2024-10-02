@@ -89,7 +89,9 @@ clock_t get_delta_time_ms()
 }
 //#define TBMS_DEBUG
 #include "filesystem.h"
+//#include "web_server.h"
 #define TBOX_BATTERY_TOTAL_CAPACITY 300
+#define TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD 10
 #define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
 #include "contactor.h"
@@ -179,6 +181,8 @@ void setup()
 	tbox_filesystem_init(&filesystem, &counter);
 	tbox_filesystem_load(&filesystem);
 
+	//tbox_web_server_init();
+
 	Serial.println( "Setup done" );
 }
 
@@ -187,7 +191,7 @@ void loop()
 	clock_t delta = get_delta_time_ms();
 
 	tb.io.timeout = 5000; //Set bigger timeout for io
-	tesla_bms_driver_update(delta);
+	tesla_bms_driver_update(delta); //TODO suspend other tasks, while busy
 
 	float minv = 999;
 	float maxv = 0;
@@ -214,6 +218,7 @@ void loop()
 	bool has_faults = !tbms_is_ready(&tb);// || abs(current_offset) > 10;
 
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
+	//TODO instant current for faster reaction
 	tbox_contactor_ack_current(&contactor, calibrated_current);
 	tbox_contactor_ack_faults(&contactor, has_faults);
 
@@ -228,12 +233,12 @@ void loop()
 		tbox_contactor_update(&contactor, delta);
 
 	if (cont_ev == TBOX_CONTACTOR_EVENT_OPEN) {
-		printf("CONTACTOR OPEN EVENT\n");
+		//printf("CONTACTOR OPEN EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, LOW);
 		contactor_closed = false;
 		auto_calibration_timer = 0;
 	} else if (cont_ev == TBOX_CONTACTOR_EVENT_CLOSE) {
-		printf("CONTACTOR CLOSE EVENT\n");
+		//printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
 		contactor_closed = true;
 	}
@@ -247,7 +252,7 @@ void loop()
 		tbox_counter_ack_max_cell(&counter, maxv);
 		tbox_counter_ack_voltage_and_current(&counter,
 			tbms_get_module_voltage(&tb, 0), calibrated_current);
-		printf("TBOX_COUNTER_QUERY_VOLTAGE_AND_CURRENT\n");
+		//printf("TBOX_COUNTER_QUERY_VOLTAGE_AND_CURRENT\n");
 		tbox_filesystem_commit(&filesystem);
 	}
 	
@@ -256,6 +261,18 @@ void loop()
 
 	//FILESYSTEM update
 	tbox_filesystem_update(&filesystem, delta);
+
+	//WEB (4 min for web update process)
+	/* static clock_t web_idle_time = 0;
+	web_idle_time += delta;
+	static bool web_enabled = true;
+	if (web_idle_time >= 60000 * 4 && web_enabled) {
+		WiFi.disconnect(true);
+		WiFi.mode(WIFI_OFF);
+		web_enabled = false;
+	} else {
+		tbox_web_server_update();
+	}*/
 
 	//UI and other tasks (update less time to let other tasks run smoothly)
 	static clock_t ui_update_timer = 0;
@@ -274,6 +291,10 @@ void loop()
 	tbms_ui_set_current(calibrated_current);
 	tbms_ui_set_power(power);
 	
+	//TODO REFACTOR
+	tbms_ui_set_status(tb.modules[0].faults, tb.modules[0].cov_faults,
+			   tb.modules[0].cuv_faults);
+	
 	tbms_ui_set_min_cell_voltage(minv);
 	tbms_ui_set_max_cell_voltage(maxv);
 	tbms_ui_set_dif_cell_voltage(maxv - minv);
@@ -284,16 +305,19 @@ void loop()
 	tbms_ui_set_soc(tbox_counter_get_soc_normalized(&counter) * 100);
 	tbms_ui_set_cycles(tbox_counter_get_cycles(&counter));
 
-	if (calibrated_current > 0) {
-		float cap_left_to_charge = 
-			tbox_counter_get_total_capacity_wh(&counter) -
-			tbox_counter_get_remaining_capacity_wh(&counter);
-
-		tbms_ui_set_timeleft_seconds(cap_left_to_charge / power);
+	if (power < -TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD) {
+		float discharge_time_seconds = 
+			(tbox_counter_get_remaining_capacity_wh(&counter) /
+			(-power)) * 3600;
+		tbms_ui_set_timeleft_seconds(discharge_time_seconds);
+	} else if (power > TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD) {
+		float charge_time_seconds =
+			((tbox_counter_get_total_capacity_wh(&counter) -
+			  tbox_counter_get_remaining_capacity_wh(&counter)) /
+			power) * 3600;
+		tbms_ui_set_timeleft_seconds(charge_time_seconds);
 	} else {
-		float cap_left_to_discharge = 
-		tbox_counter_get_remaining_capacity_wh(&counter);
-		tbms_ui_set_timeleft_seconds(cap_left_to_discharge / power);
+		tbms_ui_set_timeleft_seconds(360000);
 	}
 	
 	//6.7, 7.5

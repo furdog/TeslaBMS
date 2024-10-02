@@ -19,6 +19,10 @@ cd libraries
 #unzip fs.zip
 #rm fs.zip
 
+curl -L https://github.com/furdog/lwDASH/archive/refs/heads/main.zip > lwDASH.zip
+unzip lwDASH.zip
+rm lwDASH.zip
+
 curl -L https://github.com/Bodmer/TFT_eSPI/archive/refs/tags/V2.5.43.zip > TFT_eSPI.zip
 unzip TFT_eSPI.zip
 rm TFT_eSPI.zip
