@@ -1,14 +1,8 @@
-#ifdef ESP32
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <Update.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <ESP8266httpUpdate.h>
-#endif
+#include <DNSServer.h>
 
 #include "web_interface.h"
 
@@ -25,6 +19,8 @@ WebServer server(80);
 #else
 ESP8266WebServer server(80);
 #endif
+
+DNSServer dnsServer;
 
 // Обробка запитів на сервері
 void handleRoot() {
@@ -96,5 +92,4 @@ void tbox_web_server_update()
 {
 	dnsServer.processNextRequest();
 	server.handleClient();
-	webSocket.loop();
 }

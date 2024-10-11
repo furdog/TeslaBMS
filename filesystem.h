@@ -35,7 +35,7 @@ void tbox_filesystem_save(struct tbox_filesystem *self)
 
 	self->commit = false;
 
-	fs::File file = LittleFS.open("/state.bin", "w");
+	File file = LittleFS.open("/state.bin", "w");
 	if (!file) {
 		Serial.println(F("Failed to open file for writing"));
 
@@ -48,7 +48,7 @@ void tbox_filesystem_save(struct tbox_filesystem *self)
 }
 
 void tbox_filesystem_load(struct tbox_filesystem *self) {
-	fs::File file = LittleFS.open("/state.bin", "r");
+	File file = LittleFS.open("/state.bin", "r");
 	if (!file) {
 		Serial.println(F("Failed to open file for reading"));
 		

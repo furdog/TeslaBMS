@@ -102,6 +102,9 @@ float tbox_counter_get_soc_normalized(struct tbox_counter *self)
 void tbox_counter_ack_voltage_and_current(struct tbox_counter *self,
 					  float voltage, float current)
 {
+	if (isnan(voltage) || isnan(current))
+		return;
+	
 	if (self->sample_been_read)
 		return;
 

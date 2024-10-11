@@ -1,3 +1,5 @@
+#include "filesystem.h"
+//#include "web_server.h"
 /*Using LVGL with Arduino requires some extra steps:
  *Be sure to read the docs here: https://docs.lvgl.io/master/get-started/platforms/arduino.html  */
 
@@ -88,9 +90,7 @@ clock_t get_delta_time_ms()
 	return delta;
 }
 //#define TBMS_DEBUG
-#include "filesystem.h"
-//#include "web_server.h"
-#define TBOX_BATTERY_TOTAL_CAPACITY 300
+#define TBOX_BATTERY_TOTAL_CAPACITY 3000
 #define TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD 10
 #define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
@@ -290,6 +290,8 @@ void loop()
 	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
 	tbms_ui_set_current(calibrated_current);
 	tbms_ui_set_power(power);
+	
+	//printf("temp: %f, has_faults: %s\n",tbms_get_module_temp1(&tb, 0), has_faults ? "true" : "false");
 	
 	//TODO REFACTOR
 	tbms_ui_set_status(tb.modules[0].faults, tb.modules[0].cov_faults,

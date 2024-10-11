@@ -108,13 +108,16 @@ static void tbms_ui_set_power(float val)
 	lv_label_set_text(power_label, buf);
 }
 
-static void tbms_ui_set_temp(int val)
+static void tbms_ui_set_temp(float val)
 {
+	if (isnan(val))
+		val = 0;
+
 	if (!detailed_ui)
-		lv_bar_set_value(temp_bar, val, LV_ANIM_OFF);
+		lv_bar_set_value(temp_bar, (int)val, LV_ANIM_OFF);
 	
 	char buf[16];
-	snprintf(buf, 16, "%i%s", val, detailed_ui ? "" : "°C");
+	snprintf(buf, 16, "%i%s", (int)val, detailed_ui ? "" : "°C");
 	lv_label_set_text(temp_label, buf);
 }
 
