@@ -40,3 +40,5 @@ unzip ar.zip
 rm ar.zip
 
 cd ..
+
+patch -N ./libraries/INA226-0.6.0/INA226.h < INA226.patch

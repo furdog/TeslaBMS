@@ -1,0 +1,11 @@
+--- INA226.h	2024-10-29 14:18:12.887448400 +0200
++++ INA226_patched.h	2024-10-29 14:24:02.264271900 +0200
+@@ -41,7 +41,7 @@
+ #define INA226_ERR_NORMALIZE_FAILED       0x8003
+ 
+ //  See issue #26
+-#define INA226_MINIMAL_SHUNT              0.001
++#define INA226_MINIMAL_SHUNT              0.0001
+ 
+ #define INA226_MAX_WAIT_MS                600   //  millis
+ 

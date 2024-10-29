@@ -3,9 +3,12 @@
 #define TBOX_DEBUG
 #include "contactor.h"
 #include "counter.h"
+#include "current_meter.h"
 
 struct tbox_contactor contactor;
 struct tbox_counter counter;
+struct tbox_current_meter cmeter;
+
 int main()
 {
 	printf("TESTING CONTACTOR\n");
@@ -60,6 +63,48 @@ int main()
 	}
 	
 	printf("SOC: %f\n", tbox_counter_get_soc_normalized(&counter) * 100.0);
+
+	printf("TESTING CURRENT METER\n");
+	tbox_current_meter_init(&cmeter);
+	tbox_current_meter_ack_ready(&cmeter, true);
+	
+	#define PRINT_SAFE \
+	printf("safe to use: %s\n", \
+		tbox_current_meter_is_safe_to_use(&cmeter) ? "true" : "false")
+
+	#define PRINT_UPDATE(time) \
+	printf("update event: %s\n", tbox_current_meter_get_event_name( \
+				    tbox_current_meter_update(&cmeter, time)));
+
+	//must be false when init
+	PRINT_SAFE;
+
+	tbox_current_meter_ack_current_A(&cmeter, 0);
+
+	//Must be false if not configured
+	PRINT_SAFE;
+	
+	//Must tell timeout since no timeout configured
+	PRINT_UPDATE(0);
+
+	tbox_current_meter_set_ack_timeout_ms(&cmeter, 100);
+
+	//must tell overcurrent, since no limit configured
+	PRINT_UPDATE(0);
+
+	tbox_current_meter_set_max_current_A(&cmeter, 100);
+
+	//Must be ok
+	PRINT_UPDATE(0);
+
+	PRINT_SAFE;
+
+	//Must be overcurrent and not safe to use
+	tbox_current_meter_ack_current_A(&cmeter, 100);
+
+	PRINT_UPDATE(0);
+
+	PRINT_SAFE;
 
 	return 0;
 }

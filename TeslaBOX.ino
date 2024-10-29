@@ -99,10 +99,12 @@ clock_t get_delta_time_ms()
 
 #include "custom.h"
 #include "tesla_bms_driver.h"
+#include "current_meter_driver.h"
 
-struct tbox_filesystem filesystem;
-struct tbox_contactor  contactor;
-struct tbox_counter    counter;
+struct tbox_filesystem    filesystem;
+struct tbox_contactor     contactor;
+struct tbox_counter       counter;
+struct tbox_current_meter meter;
 
 void setup()
 {
@@ -171,7 +173,9 @@ void setup()
 	pinMode(TBOX_CONTACTOR_PIN, OUTPUT);
 	digitalWrite(TBOX_CONTACTOR_PIN, LOW);
 	//CURRENT
-	pinMode(TBOX_CURRENT_METER_PIN, INPUT);
+	//pinMode(TBOX_CURRENT_METER_PIN, INPUT);
+
+	tbox_current_meter_driver_init(&meter);
 
 	tbox_counter_init(&counter);
 	tbox_counter_set_total_capacity_wh(&counter,
@@ -182,7 +186,7 @@ void setup()
 	tbox_filesystem_load(&filesystem);
 
 	//tbox_web_server_init();
-
+	
 	Serial.println( "Setup done" );
 }
 
@@ -193,12 +197,11 @@ void loop()
 	tb.io.timeout = 5000; //Set bigger timeout for io
 	tesla_bms_driver_update(delta); //TODO suspend other tasks, while busy
 
+	tbox_current_meter_driver_update(&meter, delta);
+
 	float minv = 999;
 	float maxv = 0;
-	static float curr = 0;
-	static float current_offset = 0;
-	static float current_mult   = 1.1194029850746268656716417910448;
-	float calibrated_current = -(curr - current_offset) * current_mult;
+	float current = tbox_current_meter_get_current_A(&meter);
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -211,15 +214,15 @@ void loop()
 			maxv = v;
 	}
 	
-	float power = calibrated_current * tbms_get_module_voltage(&tb, 0);
+	float power = current * tbms_get_module_voltage(&tb, 0);
 	
 	//CONTACTOR MANAGMENT:
 	//TODO method instead of !tb.modules[0].exist;
-	bool has_faults = !tbms_is_ready(&tb);// || abs(current_offset) > 10;
+	bool has_faults = !tbms_is_ready(&tb) ||
+			  !tbox_current_meter_is_safe_to_use(&meter);
 
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
-	//TODO instant current for faster reaction
-	tbox_contactor_ack_current(&contactor, calibrated_current);
+	tbox_contactor_ack_current(&contactor, current);
 	tbox_contactor_ack_faults(&contactor, has_faults);
 
 	static bool contactor_closed = false;
@@ -248,15 +251,10 @@ void loop()
 	    TBOX_COUNTER_QUERY_VOLTAGE_AND_CURRENT &&
 	    tbox_contactor_get_event(&contactor) ==
 	    TBOX_CONTACTOR_EVENT_CLOSE && !has_faults)
-	{
-		//We only count values bigger than 2A
-		float counted_current = calibrated_current;
-		if (abs(counted_current) <= 2)
-			counted_current = 0;
-		
+	{	
 		tbox_counter_ack_max_cell(&counter, maxv);
 		tbox_counter_ack_voltage_and_current(&counter,
-			tbms_get_module_voltage(&tb, 0), counted_current);
+			tbms_get_module_voltage(&tb, 0), current);
 		//printf("TBOX_COUNTER_QUERY_VOLTAGE_AND_CURRENT\n");
 		tbox_filesystem_commit(&filesystem);
 	}
@@ -293,7 +291,7 @@ void loop()
 	
 	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
 	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
-	tbms_ui_set_current(calibrated_current);
+	tbms_ui_set_current(current);
 	tbms_ui_set_power(power);
 	
 	//printf("temp: %f, has_faults: %s\n",tbms_get_module_temp1(&tb, 0), has_faults ? "true" : "false");
@@ -326,22 +324,7 @@ void loop()
 	} else {
 		tbms_ui_set_timeleft_seconds(360000);
 	}
-	
-	//6.7, 7.5
-	uint16_t adc_reading = analogRead(TBOX_CURRENT_METER_PIN);
-	float alpha = 0.05; // коефіцієнт згладжування, де 0 < alpha <= 1
-	curr = alpha * ((adc_reading - 2048) / 10.0) +
-	       (1 - alpha) * curr;
-	
-	printf("adc: %i\n", adc_reading);
 
-	//PERFORM CURRENT AUTOCALIBRATION
-	if (tbox_contactor_get_event(&contactor) ==
-	    TBOX_CONTACTOR_EVENT_OPEN && !has_faults)
-	{
-		current_offset = curr;
-		
-		if (auto_calibration_timer >= 25000)
-			tbox_contactor_ack_ready(&contactor, true);
-	}
+	tbox_contactor_ack_ready(&contactor,
+				 tbox_current_meter_is_safe_to_use(&meter));
 }

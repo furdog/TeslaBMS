@@ -9,3 +9,12 @@ TESTING CONTACTOR
 35013: NONE
 TESTING METRICS
 SOC: 50.028443
+TESTING CURRENT METER
+safe to use: false
+safe to use: false
+update event: ACK_TIMEOUT
+update event: INPUT_OVERCURRENT
+update event: NONE
+safe to use: true
+update event: INPUT_OVERCURRENT
+safe to use: false
