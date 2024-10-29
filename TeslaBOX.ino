@@ -249,9 +249,14 @@ void loop()
 	    tbox_contactor_get_event(&contactor) ==
 	    TBOX_CONTACTOR_EVENT_CLOSE && !has_faults)
 	{
+		//We only count values bigger than 2A
+		float counted_current = calibrated_current;
+		if (abs(counted_current) <= 2)
+			counted_current = 0;
+		
 		tbox_counter_ack_max_cell(&counter, maxv);
 		tbox_counter_ack_voltage_and_current(&counter,
-			tbms_get_module_voltage(&tb, 0), calibrated_current);
+			tbms_get_module_voltage(&tb, 0), counted_current);
 		//printf("TBOX_COUNTER_QUERY_VOLTAGE_AND_CURRENT\n");
 		tbox_filesystem_commit(&filesystem);
 	}
@@ -323,10 +328,13 @@ void loop()
 	}
 	
 	//6.7, 7.5
+	uint16_t adc_reading = analogRead(TBOX_CURRENT_METER_PIN);
 	float alpha = 0.05; // коефіцієнт згладжування, де 0 < alpha <= 1
-	curr = alpha * ((analogRead(TBOX_CURRENT_METER_PIN) - 2048) / 10.0) +
+	curr = alpha * ((adc_reading - 2048) / 10.0) +
 	       (1 - alpha) * curr;
-	       
+	
+	printf("adc: %i\n", adc_reading);
+
 	//PERFORM CURRENT AUTOCALIBRATION
 	if (tbox_contactor_get_event(&contactor) ==
 	    TBOX_CONTACTOR_EVENT_OPEN && !has_faults)

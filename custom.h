@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 
 bool detailed_ui = false;
 
@@ -81,14 +82,16 @@ static void tbms_ui_set_fet_status(bool enabled)
 
 static void tbms_ui_set_current(float val)
 {
-	if (!detailed_ui) {
+	if (!detailed_ui) {/*
 		if (val < 0) {
 			lv_bar_set_start_value(current_bar, val, LV_ANIM_OFF);
 			lv_bar_set_value(current_bar, 0, LV_ANIM_OFF);
 		} else {
 			lv_bar_set_start_value(current_bar, 0, LV_ANIM_OFF);
 			lv_bar_set_value(current_bar, val, LV_ANIM_OFF);
-		}
+		}*/
+
+		lv_bar_set_value(current_bar, abs(val), LV_ANIM_OFF);
 	}
 
 	char buf[16];
@@ -214,6 +217,8 @@ static void tbms_ui_set_default()
 	//	tbms_ui_set_cell(i, 3.7);
 
 	//tbms_ui_set_soc(88);
+	
+	//tbms_ui_set_current(-150);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -518,18 +523,21 @@ void current_bar_create(lv_obj_t *parent)
 	lv_obj_add_style(bar, &style_indic, LV_PART_INDICATOR);
 	lv_obj_add_style(bar, &style_temp_bar, 0);
 	lv_obj_set_width(bar, 20);
-	lv_bar_set_range(bar, -200, 200);
+	//lv_bar_set_range(bar, -200, 200);
+	lv_bar_set_range(bar, 0, 150);
 	//lv_bar_set_orientation(bar, LV_BAR_ORIENTATION_VERTICAL);
 	lv_obj_set_flex_grow(bar, 1);
 
-	lv_bar_set_mode(bar, LV_BAR_MODE_RANGE);
-	lv_bar_set_value(bar, 200, LV_ANIM_OFF);
+	//lv_bar_set_mode(bar, LV_BAR_MODE_RANGE);
+	lv_bar_set_value(bar, 100, LV_ANIM_OFF);
 	lv_bar_set_start_value(bar, 0, LV_ANIM_OFF);
 	lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
 	lv_obj_set_style_bg_color(bar, lv_color_hex(0x001100), 0);
+	lv_obj_set_style_bg_color(bar, lv_palette_main(LV_PALETTE_RED), LV_PART_INDICATOR);
+	lv_obj_set_style_bg_grad_color(bar, lv_palette_main(LV_PALETTE_GREEN), LV_PART_INDICATOR);
 
 	/*Create style*/
-	static lv_style_t style_line;
+	/*static lv_style_t style_line;
 	lv_style_init(&style_line);
 	lv_style_set_line_width(&style_line, 5);
 	lv_style_set_line_color(&style_line, lv_palette_main(LV_PALETTE_RED));
@@ -539,9 +547,10 @@ void current_bar_create(lv_obj_t *parent)
 	
 	lv_obj_t * line1;
 	line1 = lv_line_create(bar);
-	lv_line_set_points(line1, line_points, 2);     /*Set the points*/
+	lv_line_set_points(line1, line_points, 2);     //Set the points
 	lv_obj_add_style(line1, &style_line, 0);
 	lv_obj_center(line1);
+	*/
 
 	current_label = label_create(layout, "?? A");
 

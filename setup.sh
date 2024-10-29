@@ -35,4 +35,8 @@ curl -L https://github.com/ElektroBOXua/TeslaBMS/archive/refs/heads/main.zip > t
 unzip tbms.zip
 rm tbms.zip
 
+curl -L https://github.com/RobTillaart/INA226/archive/refs/tags/0.6.0.zip > ar.zip
+unzip ar.zip
+rm ar.zip
+
 cd ..
