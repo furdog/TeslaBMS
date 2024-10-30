@@ -194,7 +194,12 @@ void loop()
 {	
 	clock_t delta = get_delta_time_ms();
 
+	#ifdef TBMS_DEBUG
+	tb.tb.io.timeout = 5000; //Set bigger timeout for io
+	#else
 	tb.io.timeout = 5000; //Set bigger timeout for io
+	#endif
+
 	tesla_bms_driver_update(delta); //TODO suspend other tasks, while busy
 
 	tbox_current_meter_driver_update(&meter, delta);
@@ -297,8 +302,13 @@ void loop()
 	//printf("temp: %f, has_faults: %s\n",tbms_get_module_temp1(&tb, 0), has_faults ? "true" : "false");
 	
 	//TODO REFACTOR
+	#ifdef TBMS_DEBUG
+	tbms_ui_set_status(tb.tb.modules[0].faults, tb.tb.modules[0].cov_faults,
+			   tb.tb.modules[0].cuv_faults);
+	#else
 	tbms_ui_set_status(tb.modules[0].faults, tb.modules[0].cov_faults,
 			   tb.modules[0].cuv_faults);
+	#endif
 	
 	tbms_ui_set_min_cell_voltage(minv);
 	tbms_ui_set_max_cell_voltage(maxv);
