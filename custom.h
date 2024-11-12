@@ -10,6 +10,7 @@ static lv_obj_t *timeleft_label;
 static lv_obj_t *cell_bar[12];
 static lv_obj_t *soc_bar;
 static lv_obj_t *voltage_label;
+static lv_obj_t *current_bar_label;
 static lv_obj_t *current_label;
 static lv_obj_t *current_bar;
 static lv_obj_t *capacity_max_label;
@@ -25,15 +26,17 @@ static lv_obj_t *minvolt_label;
 static lv_obj_t *maxvolt_label;
 static lv_obj_t *difvolt_label;
 
-static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt)
+static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt,
+			       bool meter_err)
 {
 	if (!detailed_ui)
 		return;
 
 	static char buf[32];
 
-	snprintf(buf, 32, "STATUS: %s (%02x)",
-		 stat || overvolt || undervolt ? "FAULT" : "OK", stat);
+	snprintf(buf, 32, "СТАТУС: %s %02x",
+		 stat || overvolt || undervolt ?
+			(meter_err ? "ПОМИЛКА INA" : "ПОМИЛКА") : "ДОБРЕ", stat);
 
 	lv_label_set_text(status_label, buf);
 }
@@ -77,7 +80,7 @@ static void tbms_ui_set_fet_status(bool enabled)
 	if (!detailed_ui)
 		return;
 	
-	lv_label_set_text(fet_label, enabled ? "ON" : "OFF");
+	lv_label_set_text(fet_label, enabled ? "УВІМКН" : "ВИМКН");
 }
 
 static void tbms_ui_set_current(float val)
@@ -90,6 +93,11 @@ static void tbms_ui_set_current(float val)
 			lv_bar_set_start_value(current_bar, 0, LV_ANIM_OFF);
 			lv_bar_set_value(current_bar, val, LV_ANIM_OFF);
 		}*/
+
+		if (abs(val) > 1)
+			lv_label_set_text(current_bar_label, val < 0 ? "Розряд" : "Заряд");
+		else
+			lv_label_set_text(current_bar_label, "Струм");
 
 		lv_bar_set_value(current_bar, abs(val), LV_ANIM_OFF);
 	}
@@ -177,7 +185,7 @@ static void tbms_ui_set_min_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "min %1.2fV", voltage);
+	snprintf(buf, 16, "мін %1.2fV", voltage);
 	lv_label_set_text(minvolt_label, buf);
 }
 
@@ -187,7 +195,7 @@ static void tbms_ui_set_max_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "max %1.2fV", voltage);
+	snprintf(buf, 16, "макс %1.2fV", voltage);
 	lv_label_set_text(maxvolt_label, buf);
 }
 
@@ -197,7 +205,7 @@ static void tbms_ui_set_dif_cell_voltage(float voltage)
 		return;
 
 	char buf[16];
-	snprintf(buf, 16, "dif %1.2fV", voltage);
+	snprintf(buf, 16, "різн %1.2fV", voltage);
 	lv_label_set_text(difvolt_label, buf);
 }
 
@@ -271,8 +279,8 @@ void styles_init()
 
 	lv_style_init(&style_indic);
 	lv_style_set_bg_opa(&style_indic, LV_OPA_COVER);
-	lv_style_set_bg_color(&style_indic, lv_palette_main(LV_PALETTE_BLUE));
-	lv_style_set_bg_grad_color(&style_indic, lv_palette_main(LV_PALETTE_YELLOW));
+	lv_style_set_bg_color(&style_indic, lv_palette_main(LV_PALETTE_RED));
+	lv_style_set_bg_grad_color(&style_indic, lv_palette_main(LV_PALETTE_BLUE));
 	lv_style_set_bg_grad_dir(&style_indic, LV_GRAD_DIR_VER);
 
 	lv_style_init(&style_temp_bar);
@@ -458,12 +466,14 @@ void temp_bar_create(lv_obj_t *parent)
 {
 	lv_obj_t *layout = layout_create(parent, 60, LV_PCT(95));
 
-	label_create_simple(layout, "Temp");
+	label_create_simple(layout, "Темп");
 
 	//BAR
 	lv_obj_t *volume = volume_create(layout, 30, LV_PCT(80));
 	lv_obj_t *bar = lv_bar_create(volume);
 	lv_obj_add_style(bar, &style_indic, LV_PART_INDICATOR);
+	lv_obj_set_style_bg_color(bar, lv_palette_main(LV_PALETTE_RED), LV_PART_INDICATOR);
+	lv_obj_set_style_bg_grad_color(bar, lv_palette_main(LV_PALETTE_BLUE), LV_PART_INDICATOR);
 	lv_obj_add_style(bar, &style_temp_bar, 0);
 	lv_obj_set_width(bar, 20);
 	lv_bar_set_range(bar, -20, 70);
@@ -515,7 +525,7 @@ void current_bar_create(lv_obj_t *parent)
 {
 	lv_obj_t *layout = layout_create(parent, 60, LV_PCT(95));
 
-	label_create_simple(layout, "Current");
+	current_bar_label = label_create_simple(layout, "Струм");
 
 	//BAR
 	lv_obj_t *volume = volume_create(layout, 30, LV_PCT(80));
@@ -615,7 +625,7 @@ void build_general_stats(lv_obj_t *parent)
 
 	//RIGHT CONTENT LAYOUT
 	lv_obj_t *rcont = layout_create_inv(layout, LV_PCT(50), LV_PCT(100));
-	lv_obj_set_style_pad_all(rcont, 0, 0);
+	lv_obj_set_style_pad_all(rcont, 0, -15);
 	lv_obj_set_flex_grow(rcont, 2);
 	lv_obj_set_flex_flow(rcont, LV_FLEX_FLOW_COLUMN);
 
@@ -627,8 +637,8 @@ void build_general_stats(lv_obj_t *parent)
 
 	lv_obj_t *rcont_CC0 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC0, lv_color_hex(0xFF7777), 0);
-	label_create_simple(rcont_CC0, "CAP");
-	label_create_simple(rcont_CC0, "CYC");
+	label_create_simple(rcont_CC0, "ЄМН");
+	label_create_simple(rcont_CC0, "ЦИК");
 	
 	lv_obj_t *rcont_CC1 = layout_create_inv_table(rcont_up);
 	lv_obj_set_style_text_color(rcont_CC1, lv_color_hex(0xFFFF77), 0);
@@ -650,7 +660,7 @@ void build_general_stats(lv_obj_t *parent)
 	lv_obj_set_style_pad_all(rcont_down, 0, 0);
 	lv_obj_set_flex_grow(rcont_down, 1);
 	lv_obj_set_style_bg_grad_color(rcont_down, lv_color_hex(0xAA4444), 0);
-	status_label = label_create_simple(rcont_down, "STATUS ??");
+	status_label = label_create_simple(rcont_down, "СТАТУС ??");
 }
 
 void build_cell(lv_obj_t *parent, int cell_num)
@@ -682,9 +692,9 @@ void build_cells(lv_obj_t *parent, int cell_num)
 	lv_obj_set_flex_grow(cell_stats, 1);
 	lv_obj_set_flex_flow(cell_stats, LV_FLEX_FLOW_ROW);
 
-	minvolt_label = label_create_simple(cell_stats, "min ?.??V");
-	maxvolt_label = label_create_simple(cell_stats, "max ?.??V");
-	difvolt_label = label_create_simple(cell_stats, "dif ?.??V");
+	minvolt_label = label_create_simple(cell_stats, "мін ?.??V");
+	maxvolt_label = label_create_simple(cell_stats, "макс ?.??V");
+	difvolt_label = label_create_simple(cell_stats, "різн ?.??V");
 
 	lv_obj_t *cell_voltages = layout_create_inv(layout, LV_PCT(100), 0);
 	lv_obj_set_style_pad_all(cell_voltages, 0, 0);
