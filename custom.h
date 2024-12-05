@@ -27,7 +27,7 @@ static lv_obj_t *maxvolt_label;
 static lv_obj_t *difvolt_label;
 
 static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt,
-			       bool meter_err)
+			       bool meter_err, bool other_faults)
 {
 	if (!detailed_ui)
 		return;
@@ -35,7 +35,7 @@ static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt,
 	static char buf[32];
 
 	snprintf(buf, 32, "СТАТУС: %s %02x",
-		 stat || overvolt || undervolt ?
+		 stat || overvolt || undervolt || meter_err || other_faults ?
 			(meter_err ? "ПОМИЛКА INA" : "ПОМИЛКА") : "ДОБРЕ", stat);
 
 	lv_label_set_text(status_label, buf);

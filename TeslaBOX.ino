@@ -307,10 +307,10 @@ void loop()
 	//TODO REFACTOR
 	#ifdef TBMS_DEBUG
 	tbms_ui_set_status(tb.tb.modules[0].faults, tb.tb.modules[0].cov_faults,
-			   tb.tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter));
+			   tb.tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter), has_faults);
 	#else
 	tbms_ui_set_status(tb.modules[0].faults, tb.modules[0].cov_faults,
-			   tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter));
+			   tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter), has_faults);
 	#endif
 	
 	tbms_ui_set_min_cell_voltage(minv);
