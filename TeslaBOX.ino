@@ -90,7 +90,7 @@ clock_t get_delta_time_ms()
 	return delta;
 }
 //#define TBMS_DEBUG
-#define TBOX_BATTERY_TOTAL_CAPACITY 3000
+#define TBOX_BATTERY_TOTAL_CAPACITY 5000
 #define TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD 10
 #define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
@@ -206,7 +206,10 @@ void loop()
 
 	float minv = 999;
 	float maxv = 0;
-	float current = tbox_current_meter_get_current_A(&meter);
+
+	static float current = 0;
+        float alpha = 0.01; // коефіцієнт згладжування, де 0 < alpha <= 1
+	current = alpha * tbox_current_meter_get_current_A(&meter) + (1 - alpha) * current;
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -286,7 +289,7 @@ void loop()
 	static clock_t ui_update_timer = 0;
 	ui_update_timer += delta;
 
-	if (ui_update_timer < 100)
+	if (ui_update_timer < 250)
 		return;
 	
 	ui_update_timer = 0;
