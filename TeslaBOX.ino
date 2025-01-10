@@ -232,6 +232,25 @@ void loop()
 	tbox_contactor_ack_voltage(&contactor, minv, maxv);
 	tbox_contactor_ack_current(&contactor, current);
 	tbox_contactor_ack_faults(&contactor, has_faults);
+	
+	//SAVE FAULTS STATES
+	static bool first_startup = false;
+	static uint8_t tbms_saved_faults;
+	static uint8_t tbms_saved_cov_faults;
+	static uint8_t tbms_saved_cuv_faults;
+	static bool tbms_saved_unsafe_to_use;
+	static bool tbms_saved_has_faults;
+	
+	// Set fault flags (for ui) permamently if error occur
+	// Othervise only update status before first startup
+	if (has_faults || !first_startup) {
+		tbms_saved_faults = tb.modules[0].faults;
+		tbms_saved_cov_faults = tb.modules[0].cov_faults;
+		tbms_saved_cuv_faults = tb.modules[0].cuv_faults;
+		tbms_saved_unsafe_to_use = !tbox_current_meter_is_safe_to_use(&meter);
+		tbms_saved_has_faults = has_faults;
+	}
+	//SAVE FAULTS STATES END
 
 	static bool contactor_closed = false;
 	static clock_t auto_calibration_timer = 0;
@@ -252,6 +271,7 @@ void loop()
 		//printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
 		contactor_closed = true;
+		first_startup = true;
 	}
 	
 	//COUNTER:
@@ -305,13 +325,9 @@ void loop()
 	//printf("temp: %f, has_faults: %s\n",tbms_get_module_temp1(&tb, 0), has_faults ? "true" : "false");
 	
 	//TODO REFACTOR
-	#ifdef TBMS_DEBUG
-	tbms_ui_set_status(tb.tb.modules[0].faults, tb.tb.modules[0].cov_faults,
-			   tb.tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter), has_faults);
-	#else
-	tbms_ui_set_status(tb.modules[0].faults, tb.modules[0].cov_faults,
-			   tb.modules[0].cuv_faults, !tbox_current_meter_is_safe_to_use(&meter), has_faults);
-	#endif
+	tbms_ui_set_status(tbms_saved_faults, tbms_saved_cov_faults,
+			   tbms_saved_cuv_faults, tbms_saved_unsafe_to_use,
+			   tbms_saved_has_faults);
 	
 	tbms_ui_set_min_cell_voltage(minv);
 	tbms_ui_set_max_cell_voltage(maxv);
