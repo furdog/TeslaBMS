@@ -347,18 +347,31 @@ void loop()
 	tbms_ui_set_soc(tbox_counter_get_soc_normalized(&counter) * 100);
 	tbms_ui_set_cycles(tbox_counter_get_cycles(&counter));
 
+	// Charge / discharge timeleft (seconds)
+	static float timeleft_seconds = 0;
+        float alpha2 = 0.1; // коефіцієнт згладжування, де 0 < alpha <= 1
+	
 	if (power < -TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD) {
 		float discharge_time_seconds = 
 			(tbox_counter_get_remaining_capacity_wh(&counter) /
 			(-power)) * 3600;
-		tbms_ui_set_timeleft_seconds(discharge_time_seconds);
+		
+		timeleft_seconds = alpha2  * discharge_time_seconds +
+			      (1 - alpha2) * timeleft_seconds;
+		
+		tbms_ui_set_timeleft_seconds(timeleft_seconds);
 	} else if (power > TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD) {
 		float charge_time_seconds =
 			((tbox_counter_get_total_capacity_wh(&counter) -
 			  tbox_counter_get_remaining_capacity_wh(&counter)) /
 			power) * 3600;
-		tbms_ui_set_timeleft_seconds(charge_time_seconds);
+
+		timeleft_seconds = alpha2  * charge_time_seconds +
+			      (1 - alpha2) * timeleft_seconds;
+
+		tbms_ui_set_timeleft_seconds(timeleft_seconds);
 	} else {
+		timeleft_seconds = 0;
 		tbms_ui_set_timeleft_seconds(360000);
 	}
 
