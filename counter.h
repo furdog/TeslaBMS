@@ -6,7 +6,7 @@
 #include <assert.h>
 
 #define TBOX_COUNTER_SAMPLE_PERIOD_MS 1000
-#define TBOX_COUNTER_MAX_CELL_VOLTAGE 4.2
+#define TBOX_COUNTER_MAX_CELL_VOLTAGE 4.18
 
 enum tbox_counter_event {
 	TBOX_COUNTER_EVENT_NONE,

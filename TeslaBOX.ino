@@ -90,7 +90,7 @@ clock_t get_delta_time_ms()
 	return delta;
 }
 //#define TBMS_DEBUG
-#define TBOX_BATTERY_TOTAL_CAPACITY 5000
+#define TBOX_BATTERY_TOTAL_CAPACITY 4000
 #define TBOX_BATTERY_TIMELEFT_WATT_THRESHOLD 10
 #define TBOX_CURRENT_METER_PIN 34
 #define TBOX_CONTACTOR_PIN 25
@@ -306,16 +306,24 @@ void loop()
 	}*/
 
 	//UI and other tasks (update less time to let other tasks run smoothly)
+	static clock_t lv_task_handler_update_interval = 0;
 	static clock_t ui_update_timer = 0;
+	lv_task_handler_update_interval += delta;
 	ui_update_timer += delta;
 
-	if (ui_update_timer < 250)
+	if (lv_task_handler_update_interval < 250)
 		return;
 	
-	ui_update_timer = 0;
+	lv_task_handler_update_interval = 0;
 
 	lv_task_handler(); /* let the GUI do its work */
 	//delay(5); /* let this time pass */
+	
+	//UI update interval
+	if (ui_update_timer < 1000)
+		return;
+	
+	ui_update_timer = 0;
 	
 	tbms_ui_set_temp(tbms_get_module_temp1(&tb, 0));
 	tbms_ui_set_voltage(tbms_get_module_voltage(&tb, 0));
