@@ -207,9 +207,7 @@ void loop()
 	float minv = 999;
 	float maxv = 0;
 
-	static float current = 0;
-        float alpha = 0.01; // коефіцієнт згладжування, де 0 < alpha <= 1
-	current = alpha * tbox_current_meter_get_current_A(&meter) + (1 - alpha) * current;
+	static float current = tbox_current_meter_get_current_A(&meter);
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);

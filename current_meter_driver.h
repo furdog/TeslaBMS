@@ -1,10 +1,11 @@
 #include "INA226.h"
 
-#define TBOX_CURRENT_METER_DRIVER_INA226_ADDR    0x40
-#define TBOX_CURRENT_METER_DRIVER_INA226_SDA     15 //27
-#define TBOX_CURRENT_METER_DRIVER_INA226_SCL     2  //26
-#define TBOX_CURRENT_METER_DRIVER_MAX_CURRENT_A  150
-#define TBOX_CURRENT_METER_DRIVER_ACK_TIMEOUT_MS 1000
+#define TBOX_CURRENT_METER_DRIVER_INA226_ADDR        0x40
+#define TBOX_CURRENT_METER_DRIVER_INA226_SDA         15 //27
+#define TBOX_CURRENT_METER_DRIVER_INA226_SCL         2  //26
+#define TBOX_CURRENT_METER_DRIVER_MAX_CURRENT_A      150
+#define TBOX_CURRENT_METER_DRIVER_ACK_TIMEOUT_MS     1000
+#define TBOX_CURRENT_METER_DRIVER_INA_CHECK_INTERVAL 30000
 
 INA226 INA(TBOX_CURRENT_METER_DRIVER_INA226_ADDR);
 
@@ -40,6 +41,29 @@ void tbox_current_meter_driver_init(struct tbox_current_meter *self)
 void tbox_current_meter_driver_update(struct tbox_current_meter *self,
 				      clock_t delta)
 {
-	tbox_current_meter_ack_current_A(self, INA.getCurrent());
+	//Periodically check ina connection
+	static clock_t ina_check_interval = 0;
+
+	ina_check_interval += delta;
+
+	if (ina_check_interval >=
+	    TBOX_CURRENT_METER_DRIVER_INA_CHECK_INTERVAL) {
+		bool ina_ok = false;
+
+		//Check INA connection (3 times)
+		for (int i = 0; i < 3; i++)
+			ina_ok = INA.isConnected();
+
+		if (!ina_ok)
+			tbox_current_meter_ack_ready(self, false);
+
+		ina_check_interval = 0;
+	}
+
+	static float current = 0;
+        float alpha = 0.01; // коефіцієнт згладжування, де 0 < alpha <= 1
+	current = alpha  * INA.getCurrent() + (1 - alpha) * current;
+
+	tbox_current_meter_ack_current_A(self, current);
 	tbox_current_meter_update(self, delta);
 }
