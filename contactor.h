@@ -17,10 +17,8 @@ enum tbox_contactor_event {
 };
 
 struct tbox_contactor {
-	struct {
-		async state;
-		async conditions_state;
-	} async;
+	async async_state;
+	async async_conditions_state;
 	
 	enum tbox_contactor_event last_event;
 	
@@ -45,8 +43,8 @@ struct tbox_contactor {
 
 void tbox_contactor_init(struct tbox_contactor *self)
 {
-	self->async.state	     = 0;
-	self->async.conditions_state = 0;
+	self->async_state	     = 0;
+	self->async_conditions_state = 0;
 	
 	self->last_event = TBOX_CONTACTOR_EVENT_NONE;
 	
@@ -71,7 +69,7 @@ void tbox_contactor_ack_ready(struct tbox_contactor *self, bool ready)
 	self->ready = ready;
 
 	if (!ready)
-		self->async.conditions_state = 0;
+		self->async_conditions_state = 0;
 }
 
 void tbox_contactor_ack_voltage(struct tbox_contactor *self, float minv,
@@ -122,7 +120,7 @@ enum tbox_contactor_event tbox_contactor_get_event(struct tbox_contactor *self)
 enum tbox_contactor_event tbox_contactor_update_conditions(
 				struct tbox_contactor *self)
 {
-	ASYNC_DISPATCH(self->async.conditions_state);
+	ASYNC_DISPATCH(self->async_conditions_state);
 
 	ASYNC_AWAIT(self->ready, return TBOX_CONTACTOR_EVENT_OPEN);
 
@@ -154,7 +152,7 @@ enum tbox_contactor_event tbox_contactor_update(struct tbox_contactor *self,
 {
 	self->timer += delta;
 	
-	ASYNC_DISPATCH(self->async.state);
+	ASYNC_DISPATCH(self->async_state);
 
 	ASYNC_YIELD(return tbox_contactor_set_event(self,
 						   TBOX_CONTACTOR_EVENT_OPEN));
