@@ -32,9 +32,9 @@ static void tbms_ui_set_status(uint8_t stat, bool overvolt, bool undervolt,
 	if (!detailed_ui)
 		return;
 
-	static char buf[32];
+	static char buf[64];
 
-	snprintf(buf, 32, "СТАТУС: %s %02x",
+	snprintf(buf, 64, "СТАТУС: %s %02x",
 		 stat || overvolt || undervolt || meter_err || other_faults ?
 			(meter_err ? "ПОМИЛКА INA" : "ПОМИЛКА") : "ДОБРЕ", stat);
 
@@ -665,8 +665,8 @@ void build_general_stats(lv_obj_t *parent)
 
 void build_cell(lv_obj_t *parent, int cell_num)
 {
-	char buf[3];
-	snprintf(buf, 3, "%i", cell_num + 1);
+	char buf[16];
+	snprintf(buf, 16, "%2i", cell_num + 1);
 
 	lv_obj_t *layout = layout_create(parent, 20, LV_PCT(100));
 	lv_obj_set_flex_grow(layout, 1);

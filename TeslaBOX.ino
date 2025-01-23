@@ -207,7 +207,8 @@ void loop()
 	float minv = 999;
 	float maxv = 0;
 
-	static float current = tbox_current_meter_get_current_A(&meter);
+	float current = tbox_current_meter_get_current_A(&meter);
+	//printf("CUR: %f\n", current);
 
 	for (int i = 0; i < 6; i++) {
 		float v = tbms_get_module_cell_voltage(&tb, 0, i);
@@ -250,9 +251,9 @@ void loop()
 	}
 	//SAVE FAULTS STATES END
 
-	static bool contactor_closed = false;
-	static clock_t auto_calibration_timer = 0;
-	auto_calibration_timer += delta;
+	//static bool contactor_closed = false;
+	//static clock_t auto_calibration_timer = 0;
+	//auto_calibration_timer += delta;
 	
 	//TODO more temps
 	tbox_contactor_ack_temp(&contactor, tbms_get_module_temp1(&tb, 0));
@@ -263,12 +264,12 @@ void loop()
 	if (cont_ev == TBOX_CONTACTOR_EVENT_OPEN) {
 		//printf("CONTACTOR OPEN EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, LOW);
-		contactor_closed = false;
-		auto_calibration_timer = 0;
+		//contactor_closed = false;
+		//auto_calibration_timer = 0;
 	} else if (cont_ev == TBOX_CONTACTOR_EVENT_CLOSE) {
 		//printf("CONTACTOR CLOSE EVENT\n");
 		digitalWrite(TBOX_CONTACTOR_PIN, HIGH);
-		contactor_closed = true;
+		//contactor_closed = true;
 		first_startup = true;
 	}
 	

@@ -48,21 +48,28 @@ void tbox_current_meter_driver_update(struct tbox_current_meter *self,
 
 	if (ina_check_interval >=
 	    TBOX_CURRENT_METER_DRIVER_INA_CHECK_INTERVAL) {
-		bool ina_ok = false;
+		bool ina_ok = true;
 
 		//Check INA connection (3 times)
-		for (int i = 0; i < 3; i++)
-			ina_ok = INA.isConnected();
+		for (int i = 0; i < 3; i++) {
+			// Exit the loop immediately if connection fails
+			if (!INA.isConnected()) {
+				ina_ok = false;
+				break;
+			}
+		}
 
 		if (!ina_ok)
 			tbox_current_meter_ack_ready(self, false);
+		else
+			tbox_current_meter_ack_ready(self, true);
 
 		ina_check_interval = 0;
 	}
 
 	static float current = 0;
         float alpha = 0.01; // коефіцієнт згладжування, де 0 < alpha <= 1
-	current = alpha  * INA.getCurrent() + (1 - alpha) * current;
+	current = alpha * INA.getCurrent() + (1 - alpha) * current;
 
 	tbox_current_meter_ack_current_A(self, current);
 	tbox_current_meter_update(self, delta);
