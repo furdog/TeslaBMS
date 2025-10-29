@@ -75,8 +75,8 @@ void tbox_contactor_ack_ready(struct tbox_contactor *self, bool ready)
 void tbox_contactor_ack_voltage(struct tbox_contactor *self, float minv,
 				float maxv)
 {
-	self->voltage_violation = (maxv > self->max_voltage ||
-				   minv < self->min_voltage) ? 1 : 0;
+	self->voltage_violation = (maxv >= self->max_voltage ||
+				   minv <= self->min_voltage) ? 1 : 0;
 }
 
 void tbox_contactor_ack_current(struct tbox_contactor *self, float current)
