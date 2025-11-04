@@ -5,7 +5,7 @@ It's fully abstract and have no external dependencies (except stdlib).
 Thank to collin80 for his hard work in discovering various EV protocols!
 
 ## Features:
-- Safety oriented. Each fault or communication inconsistancy MUST be treated as critical. **See method** ```tbms_is_ready```
+- Each fault or communication inconsistancy MUST be treated as critical. **See method** ```tbms_is_ready```
 - Unlike the original project, this library will try to reset itself into operable state after critical errors.
 - Fully asynchronous code (no delays).
 - Hardware-agnostic (it only accepts and returns RX/TX buffers).
