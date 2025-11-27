@@ -9,8 +9,47 @@ struct tbox_contactor contactor;
 struct tbox_counter counter;
 struct tbox_current_meter cmeter;
 
+void tbox_contactor_overvoltage_test()
+{
+	struct tbox_contactor contactor;
+
+	tbox_contactor_init(&contactor);
+
+	tbox_contactor_ack_voltage(&contactor, 3.7, 3.7);
+	tbox_contactor_ack_current(&contactor, 0);
+	tbox_contactor_ack_faults(&contactor, false);
+	tbox_contactor_ack_temp(&contactor, 21);
+	tbox_contactor_ack_ready(&contactor, true);
+
+	enum tbox_contactor_event ev_delta = TBOX_CONTACTOR_EVENT_NONE;
+
+	for (int i = 0; i < 100000; i++) {
+		enum tbox_contactor_event ev =
+			tbox_contactor_update(&contactor, 1);
+
+		if (i == 6000) {
+			tbox_contactor_ack_voltage(&contactor, 4.1, 4.3);
+		}
+
+		/*if (i == 6500) {
+			tbox_contactor_ack_voltage(&contactor, 4.1, 4.299);
+		}*/
+
+		if (ev != ev_delta) {
+			printf("%i: %s\n", i + 1,
+				tbox_contactor_get_event_name(ev));
+		}
+		
+		ev_delta = ev;
+	}
+
+	assert(0);
+}
+
 int main()
 {
+	//tbox_contactor_overvoltage_test();
+
 	printf("TESTING CONTACTOR\n");
 
 	tbox_contactor_init(&contactor);

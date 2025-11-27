@@ -332,8 +332,12 @@ void loop()
 	//printf("temp: %f, has_faults: %s\n",tbms_get_module_temp1(&tb, 0), has_faults ? "true" : "false");
 	
 	//TODO REFACTOR
-	tbms_ui_set_status(tbms_saved_faults, tbms_saved_cov_faults,
-			   tbms_saved_cuv_faults, tbms_saved_unsafe_to_use,
+	tbms_ui_set_status(tbms_saved_faults,
+			   tbms_saved_cov_faults || (
+				maxv >= contactor.max_voltage),
+			   tbms_saved_cuv_faults || (
+				minv <= contactor.min_voltage),
+			   tbms_saved_unsafe_to_use,
 			   tbms_saved_has_faults);
 	
 	tbms_ui_set_min_cell_voltage(minv);
