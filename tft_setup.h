@@ -172,14 +172,14 @@
 #define TFT_SCLK  18 // Automatically assigned with ESP8266 if not defined
 
 #define TFT_CS 5  // Chip select control pin D8
-#define TFT_DC 21 // Data Command control pin
+#define TFT_DC 26 //21 // Data Command control pin
 //#define TFT_RST   PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
 #define TFT_RST  -1     // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
 
 
 //#define TFT_BL PIN_D1  // LED back-light (only for ST7789 with backlight control pin)
 
-#define TOUCH_CS 22     // Chip select pin (T_CS) of touch screen
+#define TOUCH_CS 15 //22    // Chip select pin (T_CS) of touch screen
 
 //#define TFT_WR PIN_D2       // Write strobe for modified Raspberry Pi TFT only
 
